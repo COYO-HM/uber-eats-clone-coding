@@ -1,17 +1,17 @@
-import { Module } from '@nestjs/common';
 import * as Joi from 'joi';
-import { GraphQLModule } from '@nestjs/graphql';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import * as process from 'process';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Restaurant } from './restaurants/entities/restaurant.entitiy';
+import { RestaurantsModule } from './restaurants/restaurants.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: process.env.NODE_ENV === 'dev' ? '.env.dev' : '.env.test',
-      // production 환경일 때는 Config Module이 환경변수 파일을 무시한다.
       ignoreEnvFile: process.env.NODE_ENV === 'prod',
       validationSchema: Joi.object({
         NODE_ENV: Joi.string().valid('dev', 'prod').required(),
@@ -29,14 +29,16 @@ import { Restaurant } from './restaurants/entities/restaurant.entitiy';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [Restaurant],
       synchronize: process.env.NODE_ENV !== 'prod',
       logging: true,
+      entities: [Restaurant],
     }),
-    ,
-    GraphQLModule.forRoot({
+    GraphQLModule.forRoot<ApolloDriverConfig>({
       autoSchemaFile: true,
+      driver: ApolloDriver,
+      playground: true,
     }),
+    RestaurantsModule,
   ],
   controllers: [],
   providers: [],
